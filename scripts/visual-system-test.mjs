@@ -86,7 +86,7 @@ await page.goto(base + '/', { waitUntil: 'networkidle' })
 await page.waitForSelector('.project-card')
 const rootMetrics = await metrics('root-dark-1440')
 assert.equal(rootMetrics.topbar, null)
-assert.equal(rootMetrics.favicon, '/favicon.svg')
+assert.equal(rootMetrics.favicon, '/favicon-32.png')
 await screenshot('80-root-dark-1440')
 
 await toggleTheme()
