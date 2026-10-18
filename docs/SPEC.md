@@ -1468,7 +1468,10 @@ POST /internal/sheets/{sheetId}/restore
 
 **大图标网格：**
 
-- 文件夹卡片：大文件夹图标 + 文件夹名 + “文件夹”；文件夹包括 `第X集` → `第X拍`、`资产表` → 类别 → 名称 → 选定/备选、`文件库`（直接上传）。
+- 文件夹卡片：大文件夹图标 + 文件夹名 + “文件夹”；文件夹包括 `第X集` → `第X拍`、`资产表` → 类别 → 名称 → 选定/备选、`成片` → `第X集`、`文件库`（直接上传）。
+- `成片` 及其 `第X集` 子文件夹是虚拟文件夹，由当前有效集生成；即使还没有文件也显示，便于直接上传。物理目录在首次上传时创建。
+- 成片文件不限制数量，每集可以有多个文件（例如 A/B 两版并存）。
+- 新建项目默认包含：第 1 集、该集节拍表、项目资产表，以及文件库中可见的 `成片` / `成片 / 第1集` 虚拟文件夹。
 - 文件卡片：大缩略图（图片）或媒体图标（视频）+ 文件名 + 类型/大小；搜索时显示所在文件夹。
 - 单击卡片选中；双击文件夹进入；双击文件打开视频播放器/图片灯箱。
 - 文件夹和文件按名称排序，文件夹排在文件之前。
@@ -1511,6 +1514,11 @@ POST /internal/sheets/{sheetId}/restore
   - 只接受图片；按类别/名称归档，不自动挂表。
 - 在 `资产表` 文件夹：
   - 只接受图片；存到 `资产表 / 未分类`。
+- 在 `成片 / 第X集` 文件夹：
+  - 只接受视频；可上传多个文件，不限制版本数。
+  - 不自动挂到节拍表，成片列不会出现在节拍表视频列。
+- 在 `成片` 根文件夹：
+  - 只接受视频；存到 `成片 / 未分集`，不自动挂表。
 - 在 `文件库` 或其他根位置：
   - 视频和图片都可上传；存到 `文件库`。
 - 上传后停留在当前文件夹；文件库上传在根位置时进入 `文件库`。
@@ -1790,6 +1798,7 @@ uploading → processing → ready
 ```text
 projects/{projectId}/第{episodeNumber}集/第{beatNumber}拍/{safeFilename}
 projects/{projectId}/资产表/{category}/{assetName}/{选定|备选}/{safeFilename}
+projects/{projectId}/成片/第{episodeNumber}集/{safeFilename}
 projects/{projectId}/文件库/{safeFilename}
 
 # 系统派生文件
@@ -2054,6 +2063,7 @@ caddy    — 反向代理/HTTPS（可选自签名）
 - **文件存储按表结构**：
   - 节拍表视频：`projects/{projectId}/第{episodeNumber}集/第{beatNumber}拍/`
   - 资产表图片：`projects/{projectId}/资产表/{category}/{assetName}/{选定|备选}/`
+  - 成片：`projects/{projectId}/成片/第{episodeNumber}集/`（每集多个文件，不自动挂表）
   - 文件库直接上传：`projects/{projectId}/文件库/`
 - **输入控件**：所有 MUI `TextField` / `FormControl` 替换为自定义原生输入框，DOM 中不再出现 `MuiTextField-root`、`MuiFormControl-root`、`css-ghwvnd`。
 - **表格**：使用自定义固定列表格 + dnd-kit；点击编辑；行拖拽排序；无 Excel 式键盘操作。

@@ -220,6 +220,11 @@ export function MediaLibraryPage() {
     queryFn: () => api.listAssetFolders(projectId!),
     enabled: Boolean(projectId),
   })
+  const projectQuery = useQuery({
+    queryKey: ['project', projectId],
+    queryFn: () => api.getProject(projectId!),
+    enabled: Boolean(projectId),
+  })
 
   const items = mediaQuery.data?.items ?? []
   const virtualAssetFolders = useMemo(() => {
@@ -241,9 +246,20 @@ export function MediaLibraryPage() {
     }
     return folders
   }, [assetFoldersQuery.data, kindFilter])
+  const deliveryFolders = useMemo(() => {
+    if (kindFilter === 'image') return []
+    const folders: string[][] = [['成片']]
+    const episodes = [...(projectQuery.data?.episodes ?? [])]
+      .filter((episode) => !episode.deletedAt)
+      .sort((a, b) => a.number - b.number)
+    for (const episode of episodes) {
+      folders.push(['成片', `第${episode.number}集`])
+    }
+    return folders
+  }, [projectQuery.data?.episodes, kindFilter])
   const folderTree = useMemo(
-    () => buildFolderTree(items, virtualAssetFolders),
-    [items, virtualAssetFolders],
+    () => buildFolderTree(items, [...virtualAssetFolders, ...deliveryFolders]),
+    [items, virtualAssetFolders, deliveryFolders],
   )
   const isSearching = deferredSearch.trim().length > 0
 
@@ -316,6 +332,10 @@ export function MediaLibraryPage() {
     : parseBeatSegment(currentPath[1])
   const isEpisodeFolder = folderEpisodeNumber !== null
   const isBeatFolder = isEpisodeFolder && folderBeatNumber !== null
+  const isDeliveryFolder = !isSearching && currentPath[0] === '成片'
+  const deliveryEpisodeNumber = isDeliveryFolder
+    ? parseEpisodeSegment(currentPath[1])
+    : null
   const isAssetFolder = !isSearching && currentPath[0] === '资产表'
   const folderCategory = isAssetFolder ? currentPath[1] : undefined
   const folderAssetName = isAssetFolder ? currentPath[2] : undefined
@@ -329,11 +349,13 @@ export function MediaLibraryPage() {
   const isAssetRoleFolder = Boolean(
     isAssetFolder && folderCategory && folderAssetName && folderAssetRole,
   )
-  const folderUploadKind: 'video' | 'image' | null = isEpisodeFolder
+  const folderUploadKind: 'video' | 'image' | null = isDeliveryFolder
     ? 'video'
-    : isAssetFolder
-      ? 'image'
-      : null
+    : isEpisodeFolder
+      ? 'video'
+      : isAssetFolder
+        ? 'image'
+        : null
   const uploadAccept =
     folderUploadKind === 'video'
       ? 'video/*'
@@ -361,9 +383,13 @@ export function MediaLibraryPage() {
         ? folderCategory
           ? `资产表 / ${folderCategory}`
           : '资产表'
-        : isEpisodeFolder
-          ? `第${folderEpisodeNumber}集`
-          : '文件库'
+        : isDeliveryFolder
+          ? deliveryEpisodeNumber
+            ? `成片 / 第${deliveryEpisodeNumber}集`
+            : '成片'
+          : isEpisodeFolder
+            ? `第${folderEpisodeNumber}集`
+            : '文件库'
 
   async function uploadFiles(files: FileList | null) {
     if (!files || !projectId) return
@@ -381,7 +407,14 @@ export function MediaLibraryPage() {
           continue
         }
 
-        const context = isEpisodeFolder
+        const context = isDeliveryFolder
+          ? {
+              columnId: 'delivery.video',
+              ...(deliveryEpisodeNumber !== null
+                ? { episodeNumber: deliveryEpisodeNumber }
+                : {}),
+            }
+          : isEpisodeFolder
           ? {
               columnId: 'beat.videos',
               role: 'video',
@@ -444,7 +477,7 @@ export function MediaLibraryPage() {
       if (uploaded > 0) {
         setSearch('')
         setSelectedKey(null)
-        if (!isEpisodeFolder && !isAssetFolder) {
+        if (!isEpisodeFolder && !isAssetFolder && !isDeliveryFolder) {
           setCurrentPath(['文件库'])
         }
         const parts = [

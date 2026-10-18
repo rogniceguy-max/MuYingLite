@@ -132,7 +132,7 @@ export function ProjectListPage() {
         <DialogTitle>新建项目</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            会自动创建第 1 集的 8 行节拍表，以及一张项目资产表。
+            会自动创建第 1 集的 8 行节拍表、一张项目资产表，并在文件库显示成片文件夹。
           </Typography>
           <div className="field-block">
             <TextInput

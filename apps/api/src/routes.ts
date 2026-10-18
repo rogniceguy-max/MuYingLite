@@ -92,6 +92,9 @@ function validateUploadKind(
   if (columnId === 'beat.videos' && kind !== 'video') {
     throw new ValidationError('节拍表视频列只接受视频文件')
   }
+  if (columnId === 'delivery.video' && kind !== 'video') {
+    throw new ValidationError('成片文件夹只接受视频文件')
+  }
   if (
     (columnId === 'asset.selected' ||
       columnId === 'asset.alternates' ||

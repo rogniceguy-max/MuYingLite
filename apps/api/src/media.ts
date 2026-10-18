@@ -35,7 +35,12 @@ export function storageKeyFor(
   const name = safeFilename(filename)
   let baseDir: string
 
-  if (context?.columnId === 'beat.videos' && context.episodeNumber) {
+  if (context?.columnId === 'delivery.video') {
+    const episode = context.episodeNumber
+      ? `第${context.episodeNumber}集`
+      : '未分集'
+    baseDir = `projects/${projectId}/成片/${episode}`
+  } else if (context?.columnId === 'beat.videos' && context.episodeNumber) {
     const episode = `第${context.episodeNumber}集`
     const beat = context.beatNumber ? `第${context.beatNumber}拍` : '未分拍'
     baseDir = `projects/${projectId}/${episode}/${beat}`
@@ -90,6 +95,9 @@ export function folderPathForKey(key: string): string {
   }
   if (rest[0] === '资产表' && rest.length >= 3) {
     return rest.slice(0, -1).join(' / ')
+  }
+  if (rest[0] === '成片' && rest.length >= 2) {
+    return `成片 / ${rest[1]}`
   }
   if (rest[0] === '文件库') return '文件库'
   return '未归档'
