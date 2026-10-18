@@ -78,8 +78,11 @@ const zipPath = path.join(os.tmpdir(), 'muying-folder-archive-test.zip')
 await download.saveAs(zipPath)
 
 await page.waitForSelector('.archive-progress', { timeout: 15000 })
+await page.waitForTimeout(800)
 const panelText = await page.locator('.archive-progress').innerText()
 assert.match(panelText, /第1集/)
+assert.match(panelText, /打包完成/)
+assert.doesNotMatch(panelText, /打包已取消/)
 
 const entries = readZipEntries(fs.readFileSync(zipPath))
 assert.deepEqual(

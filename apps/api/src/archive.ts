@@ -243,6 +243,20 @@ export function streamArchiveJob(
   const archive = createArchive('zip', { zlib: { level: 0 } })
   let settled = false
   let responseFinished = false
+  let closeTimer: NodeJS.Timeout | null = null
+
+  const markDone = () => {
+    if (settled) return
+    settled = true
+    if (closeTimer) {
+      clearTimeout(closeTimer)
+      closeTimer = null
+    }
+    job.status = 'done'
+    job.processedFiles = job.totalFiles
+    job.processedBytes = job.totalBytes
+    job.finishedAt = Date.now()
+  }
 
   response.statusCode = 200
   response.setHeader('Content-Type', 'application/zip')
@@ -256,6 +270,10 @@ export function streamArchiveJob(
   const fail = (error: unknown) => {
     if (settled) return
     settled = true
+    if (closeTimer) {
+      clearTimeout(closeTimer)
+      closeTimer = null
+    }
     const message = error instanceof Error ? error.message : '打包失败'
     job.status = 'error'
     job.error = message
@@ -306,12 +324,27 @@ export function streamArchiveJob(
     })
   }
 
+  archive.on('end', markDone)
   response.on('finish', () => {
     responseFinished = true
+    markDone()
   })
   response.on('close', () => {
     if (settled || responseFinished) return
-    if (job.status === 'running') {
+    if (job.status !== 'running' || closeTimer) return
+    // A successful browser download can close the socket just before
+    // finalize/finish settles. Give them a moment before treating it
+    // as a user cancellation.
+    closeTimer = setTimeout(() => {
+      closeTimer = null
+      if (settled) return
+      if (
+        job.processedFiles >= job.totalFiles &&
+        job.processedBytes >= job.totalBytes
+      ) {
+        markDone()
+        return
+      }
       settled = true
       job.status = 'cancelled'
       job.finishedAt = Date.now()
@@ -320,18 +353,8 @@ export function streamArchiveJob(
       } catch {
         // ignore
       }
-    }
+    }, 1000)
   })
 
-  archive
-    .finalize()
-    .then(() => {
-      if (settled) return
-      settled = true
-      job.status = 'done'
-      job.processedFiles = job.totalFiles
-      job.processedBytes = job.totalBytes
-      job.finishedAt = Date.now()
-    })
-    .catch(fail)
+  archive.finalize().then(markDone).catch(fail)
 }

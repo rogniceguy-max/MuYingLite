@@ -603,6 +603,7 @@ export function MediaLibraryPage() {
     if (!projectId) return
     const anchor = document.createElement('a')
     anchor.href = api.archiveDownloadUrl(projectId, job.jobId)
+    anchor.download = `${job.folderName}.zip`
     anchor.rel = 'noopener'
     anchor.style.display = 'none'
     document.body.appendChild(anchor)
