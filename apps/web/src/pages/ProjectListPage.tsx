@@ -1,16 +1,62 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { CircularProgress, Typography } from '@mui/material'
-import { ArrowRight, Clapperboard } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from '@mui/material'
+import { ArrowRight, Clapperboard, Plus } from 'lucide-react'
 import { api } from '../api'
+import { TextInput } from '../components/TextInput'
 import { ThemeToggle } from '../components/ThemeToggle'
 
 export function ProjectListPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const projectsQuery = useQuery({
     queryKey: ['projects'],
     queryFn: api.listProjects,
   })
+
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [episodeNumber, setEpisodeNumber] = useState('1')
+  const [episodeTitle, setEpisodeTitle] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function createProject() {
+    setBusy(true)
+    setError(null)
+    try {
+      const result = await api.createProject(name.trim(), {
+        number: Number(episodeNumber),
+        title: episodeTitle.trim() || null,
+      })
+      await queryClient.invalidateQueries({ queryKey: ['projects'] })
+      const firstSheet =
+        result.sheets.find((sheet) => sheet.kind === 'beat') ??
+        result.sheets.find((sheet) => sheet.kind === 'asset')
+      setOpen(false)
+      setName('')
+      setEpisodeNumber('1')
+      setEpisodeTitle('')
+      navigate(
+        firstSheet
+          ? `/projects/${result.project.id}/sheets/${firstSheet.id}`
+          : `/projects/${result.project.id}`,
+      )
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '创建失败')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const projects = projectsQuery.data ?? []
 
@@ -43,6 +89,13 @@ export function ProjectListPage() {
           <div className="project-empty">
             <Clapperboard size={28} color="var(--accent)" />
             <Typography variant="h2">还没有项目</Typography>
+            <Button
+              variant="outlined"
+              startIcon={<Plus size={16} />}
+              onClick={() => setOpen(true)}
+            >
+              创建第一个项目
+            </Button>
           </div>
         ) : (
           <div className="project-grid">
@@ -63,9 +116,62 @@ export function ProjectListPage() {
                 </div>
               </button>
             ))}
+            <button
+              type="button"
+              className="project-card project-card-new"
+              onClick={() => setOpen(true)}
+            >
+              <Plus size={20} />
+              <span>新建项目</span>
+            </button>
           </div>
         )}
       </section>
+
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>新建项目</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            会自动创建第 1 集的 8 行节拍表，以及一张项目资产表。
+          </Typography>
+          <div className="field-block">
+            <TextInput
+              autoFocus
+              label="项目名称"
+              value={name}
+              onChange={setName}
+            />
+          </div>
+          <div className="dialog-grid">
+            <TextInput
+              label="第一集集号"
+              type="number"
+              value={episodeNumber}
+              onChange={setEpisodeNumber}
+            />
+            <TextInput
+              label="第一集标题（可选）"
+              value={episodeTitle}
+              onChange={setEpisodeTitle}
+            />
+          </div>
+          {error ? (
+            <Typography color="error" variant="body2" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          ) : null}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setOpen(false)}>取消</Button>
+          <Button
+            variant="contained"
+            onClick={() => void createProject()}
+            disabled={busy || !name.trim() || !episodeNumber}
+          >
+            {busy ? '创建中…' : '创建项目'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

@@ -446,6 +446,24 @@ textarea:focus-visible {
   color: var(--accent);
 }
 
+.project-card-new {
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-style: dashed;
+  background: var(--white-01);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.project-card-new:hover {
+  color: var(--accent);
+}
+
+.project-card-new svg {
+  color: var(--accent);
+}
+
 .project-empty {
   border: 1px dashed var(--line);
   border-radius: 16px;
