@@ -1272,7 +1272,7 @@ textarea:focus-visible {
 .selected-image-cell {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
 }
 
