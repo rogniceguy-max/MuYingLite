@@ -12,6 +12,7 @@ import {
 } from '@mui/material'
 import { ArrowRight, Plus } from 'lucide-react'
 import { api } from '../api'
+import { BrandMark } from '../components/BrandMark'
 import { TextInput } from '../components/TextInput'
 import { ThemeToggle } from '../components/ThemeToggle'
 
@@ -64,7 +65,7 @@ export function ProjectListPage() {
     <div className="project-list-page">
       <header className="project-list-header">
         <div className="brand brand-large">
-          <div className="brand-mark">沐</div>
+          <BrandMark />
           <div>
             <div className="brand-name">沐影库</div>
           </div>
@@ -87,7 +88,7 @@ export function ProjectListPage() {
           </div>
         ) : projects.length === 0 ? (
           <div className="project-empty">
-            <div className="brand-mark brand-mark-empty">沐</div>
+            <BrandMark className="brand-mark-empty" />
             <Typography variant="h2">还没有项目</Typography>
             <Button
               variant="outlined"

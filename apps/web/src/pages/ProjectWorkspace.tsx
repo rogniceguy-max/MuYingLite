@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { api } from '../api'
 import type { Episode, ProjectDetail, Sheet } from '../types'
+import { BrandMark } from '../components/BrandMark'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { TextInput } from '../components/TextInput'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -347,7 +348,7 @@ export function ProjectWorkspace() {
           onClick={() => navigate('/')}
           title="返回项目列表"
         >
-          <div className="brand-mark">沐</div>
+          <BrandMark />
           <div>
             <div className="brand-name">沐影库</div>
           </div>
