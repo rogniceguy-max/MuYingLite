@@ -113,7 +113,6 @@ await purgeBatch
   .filter({ hasText: '彻底删除' })
   .click()
 const purgeDialog = page.getByRole('dialog')
-await purgeDialog.locator('input').fill('DELETE')
 await purgeDialog.getByRole('button', { name: '彻底删除' }).click()
 await wait(1600)
 console.log(

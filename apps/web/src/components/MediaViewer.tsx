@@ -246,7 +246,7 @@ export function MediaViewer({
             sx={{
               maxHeight: '72vh',
               overflow: 'hidden',
-              borderRadius: 2,
+              borderRadius: 'var(--radius-xl)',
               backgroundColor: 'var(--media-stage)',
               display: 'flex',
               alignItems: 'center',
@@ -267,7 +267,9 @@ export function MediaViewer({
                 transformOrigin: 'center center',
                 maxWidth: '100%',
                 maxHeight: '70vh',
-                transition: dragging ? 'none' : 'transform 120ms ease',
+                transition: dragging
+                  ? 'none'
+                  : 'transform var(--dur-fast) var(--ease-out)',
                 display: 'block',
                 userSelect: 'none',
                 pointerEvents: 'none',
@@ -285,8 +287,10 @@ export function MediaViewer({
               style={{
                 width: '100%',
                 maxHeight: '72vh',
+                aspectRatio: '16 / 9',
+                objectFit: 'contain',
                 backgroundColor: '#000',
-                borderRadius: 10,
+                borderRadius: 'var(--radius-lg)',
               }}
             />
             <Stack

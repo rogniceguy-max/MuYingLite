@@ -54,8 +54,8 @@ await wait(800)
 await openFileLibraryFolder()
 
 const uploadButtonLabel = await page
-  .locator('.page-header-actions button')
-  .first()
+  .locator('.file-toolbar')
+  .getByRole('button', { name: /上传/ })
   .innerText()
 console.log('upload button label:', uploadButtonLabel)
 assert.equal(uploadButtonLabel, '上传视频')

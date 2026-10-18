@@ -27,6 +27,9 @@ export function ThemeModeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = mode
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', mode === 'dark' ? '#0a0b0d' : '#f5f4f1')
     localStorage.setItem(STORAGE_KEY, mode)
   }, [mode])
 

@@ -124,10 +124,13 @@ await wait(300)
 await page.getByRole('menuitem', { name: '彻底删除' }).click()
 const purgeDialog = page.getByRole('dialog')
 await purgeDialog.waitFor({ state: 'visible' })
-await purgeDialog.getByLabel('输入 DELETE 确认').fill('DELETE')
-await purgeDialog
-  .getByRole('button', { name: '彻底删除', exact: true })
-  .click()
+assert.equal(await purgeDialog.locator('input').count(), 0)
+const purgeConfirm = purgeDialog.getByRole('button', {
+  name: '彻底删除',
+  exact: true,
+})
+assert.equal(await purgeConfirm.isEnabled(), true)
+await purgeConfirm.click()
 await wait(1800)
 console.log('cards after purge:', await page.locator('.recycle-batch-card').count())
 const recycle = await fetch(

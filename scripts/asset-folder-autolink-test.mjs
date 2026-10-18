@@ -128,7 +128,10 @@ await page.screenshot({
 
 await enterFolder('选定')
 assert.equal(
-  await page.locator('.page-header-actions button').first().innerText(),
+  await page
+    .locator('.file-toolbar')
+    .getByRole('button', { name: /上传/ })
+    .innerText(),
   '上传图片',
 )
 await page.locator('input[type="file"]').setInputFiles({

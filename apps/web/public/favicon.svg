@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4c078" />
+      <stop offset="1" stop-color="#d99a49" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#brand)" />
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="15.25" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="1.5" />
+  <text x="32" y="44" text-anchor="middle" font-family="'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', sans-serif" font-size="36" font-weight="700" fill="#171006">沐</text>
+</svg>

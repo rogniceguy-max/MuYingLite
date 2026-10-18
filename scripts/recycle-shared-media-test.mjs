@@ -116,7 +116,7 @@ await purgeDialog.waitFor({ state: 'visible' })
 const purgeText = await purgeDialog.innerText()
 console.log('purge dialog:', purgeText)
 assert.match(purgeText, /仍被其他表引用/)
-await purgeDialog.getByLabel('输入 DELETE 确认').fill('DELETE')
+assert.equal(await purgeDialog.locator('input').count(), 0)
 await purgeDialog
   .getByRole('button', { name: '彻底删除', exact: true })
   .click()

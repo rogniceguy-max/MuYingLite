@@ -10,7 +10,7 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material'
-import { ArrowRight, Clapperboard, Plus } from 'lucide-react'
+import { ArrowRight, Plus } from 'lucide-react'
 import { api } from '../api'
 import { TextInput } from '../components/TextInput'
 import { ThemeToggle } from '../components/ThemeToggle'
@@ -87,7 +87,7 @@ export function ProjectListPage() {
           </div>
         ) : projects.length === 0 ? (
           <div className="project-empty">
-            <Clapperboard size={28} color="var(--accent)" />
+            <div className="brand-mark brand-mark-empty">沐</div>
             <Typography variant="h2">还没有项目</Typography>
             <Button
               variant="outlined"

@@ -147,14 +147,6 @@ export function SettingsPage() {
 
   return (
     <div className="settings-page">
-      <div className="page-header">
-        <div>
-          <Typography variant="h1" className="page-title">
-            项目设置
-          </Typography>
-        </div>
-      </div>
-
       <section className="settings-section">
         <div className="settings-section-title">项目</div>
         <div className="settings-card">

@@ -600,35 +600,6 @@ export function MediaLibraryPage() {
 
   return (
     <div className="library-page">
-      <div className="page-header">
-        <div>
-          <Typography variant="h1" className="page-title">
-            文件库
-          </Typography>
-        </div>
-        <div className="page-header-actions">
-          <Button
-            variant="contained"
-            startIcon={<Upload size={16} />}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? '上传中…' : uploadLabel}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            multiple
-            accept={uploadAccept}
-            onChange={(event) => {
-              void uploadFiles(event.target.files)
-              event.target.value = ''
-            }}
-          />
-        </div>
-      </div>
-
       <div className="file-manager">
         <section className="file-contents">
           <div className="file-toolbar">
@@ -708,6 +679,26 @@ export function MediaLibraryPage() {
               value={search}
               onChange={setSearch}
               className="file-search"
+            />
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<Upload size={15} />}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? '上传中…' : uploadLabel}
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              multiple
+              accept={uploadAccept}
+              onChange={(event) => {
+                void uploadFiles(event.target.files)
+                event.target.value = ''
+              }}
             />
           </div>
 

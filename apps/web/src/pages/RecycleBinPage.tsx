@@ -414,25 +414,6 @@ export function RecycleBinPage() {
 
   return (
     <div className="recycle-page">
-      <div className="page-header">
-        <div>
-          <Typography variant="h1" className="page-title">
-            回收站
-          </Typography>
-        </div>
-        <div className="page-header-actions">
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<Trash2 size={16} />}
-            onClick={() => setEmptyOpen(true)}
-            disabled={busy || batches.length === 0}
-          >
-            清空回收站
-          </Button>
-        </div>
-      </div>
-
       <div className="file-manager">
         <section className="file-contents">
           {openBatch ? (
@@ -519,6 +500,16 @@ export function RecycleBinPage() {
               <span className="recycle-count">
                 {visibleBatches.length} 个批次
               </span>
+              <Button
+                variant="outlined"
+                color="error"
+                size="small"
+                startIcon={<Trash2 size={15} />}
+                onClick={() => setEmptyOpen(true)}
+                disabled={busy || batches.length === 0}
+              >
+                清空回收站
+              </Button>
             </div>
           )}
 
@@ -705,7 +696,6 @@ export function RecycleBinPage() {
         }
         confirmLabel="彻底删除"
         confirmColor="error"
-        requireText="DELETE"
         busy={busy}
         onClose={() => setPurgeTarget(null)}
         onConfirm={() => void purge()}

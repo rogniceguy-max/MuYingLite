@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -228,6 +228,11 @@ export function SheetPage() {
   const [dropRowId, setDropRowId] = useState<string | null>(null)
   const [dropBusy, setDropBusy] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const tableFrameRef = useRef<HTMLDivElement | null>(null)
+  const tableScrollRef = useRef<HTMLDivElement | null>(null)
+  const rowHoverRailRef = useRef<HTMLDivElement | null>(null)
+  const hoveredRowRef = useRef<HTMLTableRowElement | null>(null)
+  const rowHoverFrameRef = useRef<number | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -261,6 +266,98 @@ export function SheetPage() {
   }, [collab.peers])
 
   const sheet = sheetQuery.data?.sheet
+
+  const hideRowHoverRail = useCallback(() => {
+    hoveredRowRef.current = null
+    if (rowHoverRailRef.current) {
+      rowHoverRailRef.current.style.display = 'none'
+    }
+  }, [])
+
+  const positionRowHoverRail = useCallback(() => {
+    const row = hoveredRowRef.current
+    const rail = rowHoverRailRef.current
+    const frame = tableFrameRef.current
+    const scroll = tableScrollRef.current
+    if (!row || !rail || !frame || !scroll || !row.isConnected) {
+      if (rail) rail.style.display = 'none'
+      return
+    }
+
+    const frameRect = frame.getBoundingClientRect()
+    const scrollRect = scroll.getBoundingClientRect()
+    const rowRect = row.getBoundingClientRect()
+    const head = scroll.querySelector<HTMLTableSectionElement>(
+      '.sheet-table thead',
+    )
+    const headBottom = head
+      ? head.getBoundingClientRect().bottom
+      : scrollRect.top
+    const horizontalScrollbar = Math.max(
+      0,
+      scroll.offsetHeight - scroll.clientHeight,
+    )
+    const top = Math.max(rowRect.top, scrollRect.top, headBottom)
+    const bottom = Math.min(
+      rowRect.bottom,
+      scrollRect.bottom - horizontalScrollbar,
+    )
+    if (bottom - top <= 1) {
+      rail.style.display = 'none'
+      return
+    }
+    rail.style.display = 'block'
+    rail.style.top = `${top - frameRect.top - frame.clientTop}px`
+    rail.style.height = `${bottom - top}px`
+  }, [])
+
+  const scheduleRowHoverRail = useCallback(() => {
+    if (rowHoverFrameRef.current !== null) return
+    rowHoverFrameRef.current = requestAnimationFrame(() => {
+      rowHoverFrameRef.current = null
+      if (hoveredRowRef.current) positionRowHoverRail()
+    })
+  }, [positionRowHoverRail])
+
+  const handleTableMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      const row = (event.target as HTMLElement).closest(
+        'tr.sheet-row',
+      ) as HTMLTableRowElement | null
+      if (!row) {
+        hideRowHoverRail()
+        return
+      }
+      if (hoveredRowRef.current === row) return
+      hoveredRowRef.current = row
+      positionRowHoverRail()
+    },
+    [hideRowHoverRail, positionRowHoverRail],
+  )
+
+  const handleTableMouseLeave = useCallback(() => {
+    hideRowHoverRail()
+  }, [hideRowHoverRail])
+
+  useEffect(() => {
+    hideRowHoverRail()
+  }, [sheet?.id, hideRowHoverRail])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (hoveredRowRef.current) positionRowHoverRail()
+      else hideRowHoverRail()
+    }
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      if (rowHoverFrameRef.current !== null) {
+        cancelAnimationFrame(rowHoverFrameRef.current)
+        rowHoverFrameRef.current = null
+      }
+    }
+  }, [hideRowHoverRail, positionRowHoverRail])
+
   const columns = useMemo(
     () =>
       [...(sheetQuery.data?.columns ?? [])].sort(
@@ -616,25 +713,30 @@ export function SheetPage() {
 
   return (
     <div className="sheet-page">
-      {!collab.synced || collab.status !== 'connected' ? (
+      {collab.status === 'disconnected' ? (
         <Alert
           icon={false}
-          severity={collab.status === 'disconnected' ? 'warning' : 'info'}
+          severity="warning"
           variant="outlined"
           className="connection-alert"
         >
-          {collab.status === 'disconnected'
-            ? '与协同服务的连接已断开，正在自动重连。当前内容只读，恢复后继续编辑。'
-            : '正在与协同服务同步，当前内容暂为只读。'}
+          与协同服务的连接已断开，正在自动重连。当前内容只读，恢复后继续编辑。
         </Alert>
       ) : null}
 
-      <div className="table-shell">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
+      <div className="table-shell" ref={tableFrameRef}>
+        <div
+          className="table-scroll"
+          ref={tableScrollRef}
+          onMouseMove={handleTableMouseMove}
+          onMouseLeave={handleTableMouseLeave}
+          onScroll={scheduleRowHoverRail}
         >
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
           <table
             className={`sheet-table ${isBeat ? 'beat-table' : 'asset-table'}`}
             style={{ minWidth: tableMinWidth }}
@@ -735,6 +837,12 @@ export function SheetPage() {
             <span>正在同步表内容…</span>
           </div>
         ) : null}
+        </div>
+        <div
+          className="row-hover-rail"
+          ref={rowHoverRailRef}
+          aria-hidden="true"
+        />
       </div>
 
       <MediaPicker
