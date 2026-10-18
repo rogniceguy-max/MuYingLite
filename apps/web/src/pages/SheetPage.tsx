@@ -64,19 +64,19 @@ import { EpisodesCell } from '../components/cells/EpisodesCell'
 import type { OpenMedia, PickMedia } from '../components/cells/types'
 
 const COLUMN_WIDTHS: Record<string, string> = {
-  'beat.scene': '140px',
-  'beat.beat_no': '64px',
-  'beat.story': '320px',
-  'beat.mark': '100px',
-  'beat.plan': '260px',
-  'beat.note': '280px',
-  'beat.videos': '320px',
-  'asset.category': '140px',
-  'asset.name': '190px',
-  'asset.episodes': '230px',
-  'asset.selected': '190px',
-  'asset.alternates': '290px',
-  'asset.note': '270px',
+  'beat.scene': '15%',
+  'beat.beat_no': '5%',
+  'beat.story': '21%',
+  'beat.mark': '7%',
+  'beat.plan': '14%',
+  'beat.note': '16%',
+  'beat.videos': '19%',
+  'asset.category': '9%',
+  'asset.name': '13%',
+  'asset.episodes': '17%',
+  'asset.selected': '14%',
+  'asset.alternates': '21%',
+  'asset.note': '23%',
 }
 
 type PickerState = {
@@ -709,7 +709,6 @@ export function SheetPage() {
   }
 
   const isBeat = sheet.kind === 'beat'
-  const tableMinWidth = isBeat ? 1526 : 1322
 
   return (
     <div className="sheet-page">
@@ -739,14 +738,13 @@ export function SheetPage() {
           >
           <table
             className={`sheet-table ${isBeat ? 'beat-table' : 'asset-table'}`}
-            style={{ minWidth: tableMinWidth }}
           >
             <colgroup>
-              <col style={{ width: 42 }} />
+              <col style={{ width: '3%' }} />
               {columns.map((column) => (
                 <col
                   key={column.id}
-                  style={{ width: COLUMN_WIDTHS[column.id] ?? '180px' }}
+                  style={{ width: COLUMN_WIDTHS[column.id] ?? '10%' }}
                 />
               ))}
             </colgroup>

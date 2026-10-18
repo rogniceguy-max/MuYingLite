@@ -1,0 +1,6 @@
+MiSans
+Copyright © 2020-2023 Beijing Xiaomi Mobile Software Co., Ltd. All Rights Reserved.
+
+MiSans is made available by Xiaomi under the MiSans font license.
+For the full license terms, see the official MiSans page:
+https://hyperos.mi.com/font/

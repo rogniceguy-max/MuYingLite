@@ -7,7 +7,8 @@
 ## 现在能做什么
 
 - 统一视觉系统：颜色、字号、间距、圆角、动效使用同一套 CSS token；浅色为暖中性纸白，深色为中性石墨，强调色为琥珀金
-- 项目内页面（节拍表、资产表、文件库、回收站、项目设置）共享顶栏面包屑、24px 内容边距和同一内容起点；文件库/回收站/项目设置不再重复显示大标题，操作按钮进入工具栏；项目列表保留独立的 Root 页头
+- 全局使用自托管 MiSans（Regular / Medium / Semibold，700 映射到 600）：菜单/下拉选项和标题 18px，正文/表格单元格/按钮/侧栏 16px，表头/说明文字/徽标/计数/状态胶囊 14px
+- 项目内页面（节拍表、资产表、文件库、回收站、项目设置）共享顶栏面包屑和 24px 内容边距；节拍表、资产表、文件库、回收站铺满工作区，不再有 1680px 最大宽度；表格列宽按比例自适应，1280 / 1440 / 2560 均不出现横向滚动，列变窄时换行、行高增加；项目列表保留独立的 Root 页头
 - 表格与文件库按视口高度填充，滚动条预留空间；首屏前应用主题，图片容器预留尺寸，减少加载和切换时的布局跳动
 - 品牌字标、favicon、空状态标识已统一；动效使用 140/180ms ease-out，并尊重 `prefers-reduced-motion`
 - 项目列表与进入项目；Root 页头不显示“新建项目”按钮，空状态和项目网格仍可打开新建项目对话框
@@ -157,6 +158,7 @@ rm -rf data/app.db data/app.db-shm data/app.db-wal data/uploads/*
 | 表格 | 自定义固定列表格 + dnd-kit 行拖拽 |
 | 状态 | TanStack Query + React 本地状态 |
 | UI | MUI 7（对话框/按钮/菜单/提示）+ 自定义 CSS + 原生输入框 |
+| 字体 | 自托管 MiSans（Regular / Medium / Semibold WOFF2） |
 | 图标 | Lucide（`lucide-react`） |
 | 协同 | Yjs + Hocuspocus |
 | 后端 | Fastify 5 + TypeScript |
@@ -222,6 +224,7 @@ apps/
       collab/           # Yjs hooks 与行工具
       api.ts            # REST 客户端
       styles.css        # 设计系统
+    public/fonts/       # MiSans WOFF2 与授权说明
 docs/SPEC.md
 scripts/                # 演示与验收脚本
 screenshots/            # 本地截图产物，不随仓库上传
@@ -277,6 +280,9 @@ node scripts/delivery-folder-test.mjs
 
 # 文件库从系统一次拖入多个文件
 node scripts/file-library-drop-test.mjs
+
+# MiSans 字阶、表格自适应列宽、1280/1440/2560 无横向滚动
+node scripts/typography-layout-test.mjs
 ```
 
 `scripts/` 下还保留了开发过程中的填充/并发/回收站验证脚本；其中部分脚本依赖旧版 UI 选择器，不作为交付验收入口。
