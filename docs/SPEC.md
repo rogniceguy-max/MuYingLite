@@ -978,6 +978,46 @@ If-Match: 3
 }
 ```
 
+#### 5.5.3.1 文件夹归档任务
+
+`POST /api/projects/{projectId}/archive-jobs`
+
+请求体：
+
+```json
+{ "folder": ["第1集"] }
+```
+
+`folder` 是文件库当前显示路径的分段数组；服务端按当前显示目录匹配媒体，不按物理存储目录匹配。
+
+响应：
+
+```json
+{
+  "job": {
+    "jobId": "uuid",
+    "projectId": "uuid",
+    "folderName": "第1集",
+    "status": "queued",
+    "totalFiles": 12,
+    "processedFiles": 0,
+    "totalBytes": 524288000,
+    "processedBytes": 0,
+    "missingFiles": 0,
+    "error": null
+  }
+}
+```
+
+`GET /api/projects/{projectId}/archive-jobs/{jobId}` 返回同一结构的最新进度；`status` 为 `queued | running | done | error | cancelled`。
+
+`GET /api/projects/{projectId}/archive-jobs/{jobId}/file` 流式返回 `application/zip`，只能启动一次：
+
+- ZIP 根目录为请求路径的最后一段，例如 `第1集/第1拍/flower.mp4`。
+- 使用 store 模式，不做压缩；条目名使用 UTF-8。
+- 缺失文件跳过，并写入 `_缺失文件.txt`。
+- 任务保存在内存中，完成或排队超时后自动清理；不落盘、不持久化。
+
 #### 5.5.4 媒体详情与播放地址
 
 `GET /api/media/{assetId}`
@@ -1436,7 +1476,20 @@ POST /internal/sheets/{sheetId}/restore
   - 下载原文件
   - 重命名显示名（只改 `display_name`，不改 `storage_key`）
   - 删除（若仍被使用，提示使用位置；可确认强制删除）
+- 右键文件夹：
+  - 打开
+  - 下载文件夹（ZIP）：以被右键的文件夹为 ZIP 根目录，保留其下层级
 - 文件卡片可拖拽；拖到表格行可把已有媒体挂到对应行。
+
+**文件夹下载（ZIP）：**
+
+- 下载范围按文件库当前显示目录计算，而不是按物理 `storage_key` 目录；资产图片的选定/备选角色、共享媒体的当前显示位置都会反映在 ZIP 中。
+- 只打包当前未删除的媒体；缺失原文件跳过，并在 ZIP 内生成 `_缺失文件.txt`。
+- 使用流式 ZIP（store，不压缩），不在内存中聚合文件；支持大视频。
+- ZIP 文件名使用所选文件夹名，例如 `第1集.zip`；条目从 `第1集/...` 开始。
+- 打包过程创建内存中的归档任务，前端轮询进度：`totalFiles / processedFiles`、`totalBytes / processedBytes`、状态。
+- 文件库右下角显示非模态进度面板（标题、进度条、已处理文件数/字节）；打包完成后提示“浏览器正在下载”，6 秒后自动收起，也可手动关闭。
+- 同一时间前端只允许一个打包任务；关闭进度面板不会中断已经开始的浏览器下载。
 
 **上传：**
 

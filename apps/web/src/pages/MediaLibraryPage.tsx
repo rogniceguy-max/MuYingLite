@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  LinearProgress,
   Menu,
   MenuItem,
   Snackbar,
@@ -24,9 +25,10 @@ import {
   Pencil,
   Trash2,
   Upload,
+  X,
 } from 'lucide-react'
 import { api, ApiError } from '../api'
-import type { LinkedRow, MediaAsset } from '../types'
+import type { ArchiveJob, LinkedRow, MediaAsset } from '../types'
 import { formatBytes } from '../utils'
 import { MediaViewer } from '../components/MediaViewer'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -134,6 +136,17 @@ function findNode(
   return node
 }
 
+function summarizeFolder(node: FolderNode): { files: number; bytes: number } {
+  let files = node.files.length
+  let bytes = node.files.reduce((sum, file) => sum + file.sizeBytes, 0)
+  for (const child of node.folders.values()) {
+    const summary = summarizeFolder(child)
+    files += summary.files
+    bytes += summary.bytes
+  }
+  return { files, bytes }
+}
+
 const ROLE_FOLDER_ORDER: Record<string, number> = {
   选定: 0,
   备选: 1,
@@ -172,6 +185,12 @@ export function MediaLibraryPage() {
     y: number
     asset: MediaAsset
   } | null>(null)
+  const [folderMenu, setFolderMenu] = useState<{
+    x: number
+    y: number
+    node: FolderNode
+  } | null>(null)
+  const [archiveJob, setArchiveJob] = useState<ArchiveJob | null>(null)
   const [renameTarget, setRenameTarget] = useState<MediaAsset | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [renameError, setRenameError] = useState<string | null>(null)
@@ -227,6 +246,52 @@ export function MediaLibraryPage() {
     [items, virtualAssetFolders],
   )
   const isSearching = deferredSearch.trim().length > 0
+
+  useEffect(() => {
+    if (!archiveJob || !projectId) return
+    if (
+      archiveJob.status === 'done' ||
+      archiveJob.status === 'error' ||
+      archiveJob.status === 'cancelled'
+    ) {
+      return
+    }
+    let cancelled = false
+    let timer: number | undefined
+    const tick = async () => {
+      try {
+        const next = await api.getArchiveJob(projectId, archiveJob.jobId)
+        if (!cancelled) setArchiveJob(next)
+      } catch (error) {
+        if (!cancelled) {
+          setArchiveJob((current) =>
+            current
+              ? {
+                  ...current,
+                  status: 'error',
+                  error:
+                    error instanceof Error ? error.message : '打包失败',
+                }
+              : current,
+          )
+        }
+      }
+      if (!cancelled) {
+        timer = window.setTimeout(tick, 250)
+      }
+    }
+    timer = window.setTimeout(tick, 250)
+    return () => {
+      cancelled = true
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [archiveJob?.jobId, archiveJob?.status, projectId])
+
+  useEffect(() => {
+    if (archiveJob?.status !== 'done') return
+    const timer = window.setTimeout(() => setArchiveJob(null), 6000)
+    return () => window.clearTimeout(timer)
+  }, [archiveJob?.status, archiveJob?.jobId])
 
   const currentNode = isSearching
     ? null
@@ -501,6 +566,37 @@ export function MediaLibraryPage() {
     setCurrentPath(segments)
   }
 
+  function triggerArchiveDownload(job: ArchiveJob) {
+    if (!projectId) return
+    const anchor = document.createElement('a')
+    anchor.href = api.archiveDownloadUrl(projectId, job.jobId)
+    anchor.rel = 'noopener'
+    anchor.style.display = 'none'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+  }
+
+  async function startFolderArchive(node: FolderNode) {
+    if (!projectId) return
+    if (
+      archiveJob &&
+      (archiveJob.status === 'queued' || archiveJob.status === 'running')
+    ) {
+      setToast('已有文件夹正在打包，请稍候')
+      setFolderMenu(null)
+      return
+    }
+    setFolderMenu(null)
+    try {
+      const job = await api.createArchiveJob(projectId, node.segments)
+      setArchiveJob(job)
+      triggerArchiveDownload(job)
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : '打包失败')
+    }
+  }
+
   function renderFolderCard(node: FolderNode) {
     const key = `folder:${node.segments.join('/')}`
     return (
@@ -516,7 +612,16 @@ export function MediaLibraryPage() {
             openFolder(node.segments)
           }
         }}
-        title={`双击打开 ${node.segments.join(' / ')}`}
+        onContextMenu={(event) => {
+          event.preventDefault()
+          setSelectedKey(key)
+          setFolderMenu({
+            x: event.clientX,
+            y: event.clientY,
+            node,
+          })
+        }}
+        title={`双击打开 · 右键下载 ${node.segments.join(' / ')}`}
       >
         <div className="file-card-thumb is-folder">
           <Folder size={64} strokeWidth={1.25} />
@@ -597,6 +702,23 @@ export function MediaLibraryPage() {
     !mediaQuery.isLoading &&
     visibleFolders.length === 0 &&
     visibleFiles.length === 0
+  const folderMenuStats = folderMenu ? summarizeFolder(folderMenu.node) : null
+  const archivePercent = !archiveJob
+    ? 0
+    : archiveJob.status === 'done'
+      ? 100
+      : archiveJob.totalBytes > 0
+        ? Math.min(
+            100,
+            Math.round(
+              (archiveJob.processedBytes / archiveJob.totalBytes) * 100,
+            ),
+          )
+        : archiveJob.totalFiles > 0
+          ? Math.round(
+              (archiveJob.processedFiles / archiveJob.totalFiles) * 100,
+            )
+          : 0
 
   return (
     <div className="library-page">
@@ -780,6 +902,42 @@ export function MediaLibraryPage() {
         </MenuItem>
       </Menu>
 
+      <Menu
+        open={Boolean(folderMenu)}
+        onClose={() => setFolderMenu(null)}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          folderMenu ? { top: folderMenu.y, left: folderMenu.x } : undefined
+        }
+      >
+        <MenuItem
+          sx={{ gap: 1 }}
+          onClick={() => {
+            if (folderMenu) openFolder(folderMenu.node.segments)
+            setFolderMenu(null)
+          }}
+        >
+          <Folder size={16} />
+          打开
+        </MenuItem>
+        <MenuItem
+          sx={{ gap: 1 }}
+          disabled={!folderMenuStats || folderMenuStats.files === 0}
+          onClick={() => {
+            if (folderMenu) void startFolderArchive(folderMenu.node)
+          }}
+        >
+          <Download size={16} />
+          下载文件夹
+          {folderMenuStats ? (
+            <span className="menu-hint">
+              {folderMenuStats.files} 个文件 ·{' '}
+              {formatBytes(folderMenuStats.bytes)}
+            </span>
+          ) : null}
+        </MenuItem>
+      </Menu>
+
       <Dialog
         open={Boolean(renameTarget)}
         onClose={() => setRenameTarget(null)}
@@ -849,6 +1007,67 @@ export function MediaLibraryPage() {
         message={toast ?? ''}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
+
+      {archiveJob ? (
+        <div
+          className={`archive-progress archive-${archiveJob.status}`}
+          role="status"
+          aria-live="polite"
+        >
+          <div className="archive-progress-head">
+            <span className="archive-progress-title">
+              {archiveJob.status === 'done'
+                ? '打包完成'
+                : archiveJob.status === 'error'
+                  ? '打包失败'
+                  : archiveJob.status === 'cancelled'
+                    ? '打包已取消'
+                    : '正在打包'}
+              <span className="archive-progress-folder">
+                {archiveJob.folderName}
+              </span>
+            </span>
+            <button
+              type="button"
+              className="archive-progress-close"
+              onClick={() => setArchiveJob(null)}
+              aria-label="关闭打包进度"
+            >
+              <X size={15} />
+            </button>
+          </div>
+          <LinearProgress
+            variant={
+              archiveJob.totalBytes > 0 ? 'determinate' : 'indeterminate'
+            }
+            value={archivePercent}
+            className="archive-progress-bar"
+          />
+          <div className="archive-progress-meta">
+            {archiveJob.status === 'done'
+              ? `浏览器正在下载 · ${archiveJob.totalFiles} 个文件 · ${formatBytes(archiveJob.totalBytes)}`
+              : archiveJob.status === 'error'
+                ? archiveJob.error ?? '压缩失败'
+                : archiveJob.status === 'cancelled'
+                  ? '下载已取消'
+                  : `${archiveJob.processedFiles}/${archiveJob.totalFiles} 个文件 · ${archivePercent}% · ${formatBytes(archiveJob.processedBytes)} / ${formatBytes(archiveJob.totalBytes)}`}
+          </div>
+          {archiveJob.missingFiles > 0 ? (
+            <div className="archive-progress-note">
+              {archiveJob.missingFiles} 个文件不可用，已跳过
+            </div>
+          ) : null}
+          {archiveJob.status === 'queued' ? (
+            <button
+              type="button"
+              className="archive-progress-start"
+              onClick={() => triggerArchiveDownload(archiveJob)}
+            >
+              开始下载
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }

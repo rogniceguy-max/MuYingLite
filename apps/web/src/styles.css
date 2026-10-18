@@ -2494,6 +2494,116 @@ html {
   font-variant-numeric: tabular-nums;
 }
 
+.menu-hint {
+  margin-left: auto;
+  color: var(--muted-2);
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+}
+
+.archive-progress {
+  position: fixed;
+  right: var(--space-6);
+  bottom: var(--space-5);
+  z-index: 1200;
+  width: min(360px, calc(100vw - 32px));
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--panel-2);
+  box-shadow: var(--shadow-pop);
+  color: var(--text);
+}
+
+.archive-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.archive-progress-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.archive-progress-folder {
+  color: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.archive-progress-close {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.archive-progress-close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.archive-progress-bar.MuiLinearProgress-root {
+  margin-top: var(--space-3);
+  height: 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--line-soft);
+}
+
+.archive-progress-bar .MuiLinearProgress-bar {
+  background-color: var(--accent);
+}
+
+.archive-progress-meta {
+  margin-top: var(--space-2);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.archive-error .archive-progress-meta {
+  color: var(--danger-text);
+}
+
+.archive-done .archive-progress-meta {
+  color: var(--green);
+}
+
+.archive-progress-note {
+  margin-top: 4px;
+  color: var(--yellow);
+  font-size: var(--fs-2xs);
+}
+
+.archive-progress-start {
+  margin-top: var(--space-2);
+  padding: 4px 10px;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+}
+
+.archive-progress-start:hover {
+  border-color: var(--accent);
+}
+
 img,
 video {
   display: block;

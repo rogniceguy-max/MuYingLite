@@ -103,6 +103,26 @@ export type MediaListResponse = {
   nextCursor: string | null
 }
 
+export type ArchiveJobStatus =
+  | 'queued'
+  | 'running'
+  | 'done'
+  | 'error'
+  | 'cancelled'
+
+export type ArchiveJob = {
+  jobId: string
+  projectId: string
+  folderName: string
+  status: ArchiveJobStatus
+  totalFiles: number
+  processedFiles: number
+  totalBytes: number
+  processedBytes: number
+  missingFiles: number
+  error: string | null
+}
+
 export type AssetFolderRef = {
   category: string
   name: string

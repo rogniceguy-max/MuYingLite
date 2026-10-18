@@ -862,6 +862,38 @@ export function listMedia(
   }
 }
 
+export type ArchiveMediaEntry = {
+  id: string
+  displayName: string
+  storageKey: string
+  sizeBytes: number
+  folderPath: string
+}
+
+export function listArchiveMedia(projectId: string): ArchiveMediaEntry[] {
+  const rows = db
+    .prepare(
+      `SELECT * FROM media_assets
+       WHERE project_id = ? AND deleted_at IS NULL
+       ORDER BY created_at`,
+    )
+    .all(projectId) as any[]
+  const assetFolderPaths = assetMediaFolderPaths(projectId)
+
+  return rows.map((row) => {
+    const formatted = formatMediaAsset(row)
+    return {
+      id: row.id,
+      displayName: row.display_name,
+      storageKey: row.storage_key,
+      sizeBytes: Number(row.size_bytes ?? 0),
+      folderPath:
+        assetFolderPaths.get(row.id) ??
+        String(formatted.folderPath ?? '文件库'),
+    }
+  })
+}
+
 export function getMediaDetail(assetId: string): Record<string, unknown> {
   const asset = db
     .prepare('SELECT * FROM media_assets WHERE id = ? AND deleted_at IS NULL')

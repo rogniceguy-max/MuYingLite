@@ -1,5 +1,6 @@
 import { v7 as uuidv7 } from 'uuid'
 import type {
+  ArchiveJob,
   AssetFolderRef,
   Episode,
   MediaAsset,
@@ -185,6 +186,23 @@ export const api = {
       `/api/projects/${projectId}/media${suffix}`,
     )
   },
+
+  createArchiveJob: (projectId: string, folder: string[]) =>
+    request<{ job: ArchiveJob }>(
+      `/api/projects/${projectId}/archive-jobs`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ folder }),
+      },
+    ).then((response) => response.job),
+
+  getArchiveJob: (projectId: string, jobId: string) =>
+    request<{ job: ArchiveJob }>(
+      `/api/projects/${projectId}/archive-jobs/${jobId}`,
+    ).then((response) => response.job),
+
+  archiveDownloadUrl: (projectId: string, jobId: string) =>
+    `${API_BASE}/api/projects/${projectId}/archive-jobs/${jobId}/file`,
 
   getMedia: (assetId: string) =>
     request<{

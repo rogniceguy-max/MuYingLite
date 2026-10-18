@@ -36,6 +36,12 @@ import {
 } from './media.js'
 import { AppError, ValidationError } from './errors.js'
 import { subscribeProject } from './events.js'
+import {
+  createArchiveJob,
+  getArchiveJob,
+  startArchiveDownload,
+  streamArchiveJob,
+} from './archive.js'
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -328,6 +334,33 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     const query = request.query as { force?: string }
     return deleteMediaAsset(assetId, query.force === 'true')
   })
+
+  // ---------- folder archives ----------
+  app.post('/api/projects/:projectId/archive-jobs', async (request) => {
+    const { projectId } = request.params as { projectId: string }
+    const body = requireBody(request)
+    return { job: createArchiveJob(projectId, body.folder) }
+  })
+
+  app.get('/api/projects/:projectId/archive-jobs/:jobId', async (request) => {
+    const { projectId, jobId } = request.params as {
+      projectId: string
+      jobId: string
+    }
+    return { job: getArchiveJob(projectId, jobId) }
+  })
+
+  app.get(
+    '/api/projects/:projectId/archive-jobs/:jobId/file',
+    async (request, reply) => {
+      const { projectId, jobId } = request.params as {
+        projectId: string
+        jobId: string
+      }
+      const job = startArchiveDownload(projectId, jobId)
+      streamArchiveJob(job, reply)
+    },
+  )
 
   // ---------- recycle bin ----------
   app.get('/api/projects/:projectId/recycle-bin', async (request) => {
