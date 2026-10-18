@@ -168,6 +168,7 @@ export function MediaLibraryPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [dragActive, setDragActive] = useState(false)
   const [kindFilter, setKindFilter] = useState<KindFilter>('all')
   const [usageFilter, setUsageFilter] = useState<UsageFilter>('all')
   const [search, setSearch] = useState('')
@@ -391,8 +392,8 @@ export function MediaLibraryPage() {
             ? `第${folderEpisodeNumber}集`
             : '文件库'
 
-  async function uploadFiles(files: FileList | null) {
-    if (!files || !projectId) return
+  async function uploadFiles(files: FileList | File[] | null) {
+    if (!files || !projectId || uploading) return
     setUploading(true)
     const list = Array.from(files)
     let uploaded = 0
@@ -509,6 +510,37 @@ export function MediaLibraryPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  function isFileDrag(event: React.DragEvent<HTMLDivElement>): boolean {
+    return Array.from(event.dataTransfer.types).includes('Files')
+  }
+
+  function handleLibraryDragEnter(event: React.DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(event)) return
+    event.preventDefault()
+    setDragActive(true)
+  }
+
+  function handleLibraryDragOver(event: React.DragEvent<HTMLDivElement>) {
+    if (!isFileDrag(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    setDragActive(true)
+  }
+
+  function handleLibraryDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    const next = event.relatedTarget as Node | null
+    if (next && event.currentTarget.contains(next)) return
+    setDragActive(false)
+  }
+
+  function handleLibraryDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    setDragActive(false)
+    if (!isFileDrag(event)) return
+    const files = Array.from(event.dataTransfer.files)
+    if (files.length > 0) void uploadFiles(files)
   }
 
   async function requestDelete(asset: MediaAsset) {
@@ -756,7 +788,13 @@ export function MediaLibraryPage() {
 
   return (
     <div className="library-page">
-      <div className="file-manager">
+      <div
+        className="file-manager"
+        onDragEnter={handleLibraryDragEnter}
+        onDragOver={handleLibraryDragOver}
+        onDragLeave={handleLibraryDragLeave}
+        onDrop={handleLibraryDrop}
+      >
         <section className="file-contents">
           <div className="file-toolbar">
             <IconButton
@@ -887,6 +925,17 @@ export function MediaLibraryPage() {
               </>
             )}
           </div>
+          {dragActive ? (
+            <div className="file-drop-overlay" aria-hidden="true">
+              <Upload size={30} />
+              <span>松开即可上传到 {folderTargetLabel}</span>
+              <small>
+                {folderUploadKind
+                  ? `只接受${folderKindLabel}，支持一次拖入多个文件`
+                  : '支持视频和图片，可一次拖入多个文件'}
+              </small>
+            </div>
+          ) : null}
         </section>
       </div>
 

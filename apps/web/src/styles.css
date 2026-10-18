@@ -2129,6 +2129,7 @@ textarea:focus-visible {
 }
 
 .file-contents {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -2138,6 +2139,40 @@ textarea:focus-visible {
   border-radius: var(--radius-xl);
   background: var(--panel);
   box-shadow: var(--shadow-soft);
+}
+
+.file-drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border: 2px dashed var(--accent);
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  backdrop-filter: blur(2px);
+  color: var(--text);
+  text-align: center;
+  pointer-events: none;
+}
+
+.file-drop-overlay svg {
+  color: var(--accent);
+}
+
+.file-drop-overlay span {
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.file-drop-overlay small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
 }
 
 .file-toolbar {
